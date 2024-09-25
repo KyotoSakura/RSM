@@ -6,7 +6,7 @@ import numpy as np
 from torch import optim
 import torchvision.transforms as T
 from torch.utils.data import DataLoader
-from utils.data_loading import BasicDataset
+from utils.data_loading import TrainDataset, ValDataset
 from utils.path_hyperparameter import ph
 import torch
 from utils.losses import FCCDN_loss_without_seg
@@ -65,12 +65,20 @@ def train_net(dataset_name):
     # 1. Create dataset, checkpoint and best model path
 
     # dataset path should be dataset_name/train or val/t1 or t2 or label
-    train_dataset = BasicDataset(images_dir=f'{ph.root_dir}/{dataset_name}/train/image/',
+    # train_dataset = BasicDataset(images_dir=f'{ph.root_dir}/{dataset_name}/train/image/',
+    #                              labels_dir=f'{ph.root_dir}/{dataset_name}/train/label/',
+    #                              train=True)
+    # val_dataset = BasicDataset(images_dir=f'{ph.root_dir}/{dataset_name}/val/image/',
+    #                            labels_dir=f'{ph.root_dir}/{dataset_name}/val/label/',
+    #                            train=False)
+    train_dataset = TrainDataset(images_dir=f'{ph.root_dir}/{dataset_name}/train/image/',
                                  labels_dir=f'{ph.root_dir}/{dataset_name}/train/label/',
                                  train=True)
-    val_dataset = BasicDataset(images_dir=f'{ph.root_dir}/{dataset_name}/val/image/',
+    val_dataset = ValDataset(images_dir=f'{ph.root_dir}/{dataset_name}/val/image/',
                                labels_dir=f'{ph.root_dir}/{dataset_name}/val/label/',
                                train=False)
+
+
 
     # 2. Markdown dataset size
     n_train = len(train_dataset)
@@ -84,7 +92,7 @@ def train_net(dataset_name):
                        )
     train_loader = DataLoader(train_dataset, shuffle=True, drop_last=False, batch_size=ph.batch_size, **loader_args)
     val_loader = DataLoader(val_dataset, shuffle=False, drop_last=False,
-                             batch_size=ph.batch_size * ph.inference_ratio, **loader_args)
+                             batch_size=1, **loader_args)
 
     # 4. Initialize logging
 
@@ -115,9 +123,9 @@ def train_net(dataset_name):
 
     # 5. Set up model, optimizer, warm_up_scheduler, learning rate scheduler, loss function and other things
 
-    # net = RSM_SS(dims=ph.dims, depths=ph.depths, ssm_d_state=ph.ssm_d_state, ssm_dt_rank=ph.ssm_dt_rank, \
-    #             ssm_ratio=ph.ssm_ratio, mlp_ratio=ph.mlp_ratio, downsample_version=ph.downsample_version, patchembed_version=ph.patchembed_version)  # change detection model
-    net = UNetFormer(num_classes=1)
+    net = RSM_SS(dims=ph.dims, depths=ph.depths, ssm_d_state=ph.ssm_d_state, ssm_dt_rank=ph.ssm_dt_rank, \
+                ssm_ratio=ph.ssm_ratio, mlp_ratio=ph.mlp_ratio, downsample_version=ph.downsample_version, patchembed_version=ph.patchembed_version)  # change detection model
+    # net = UNetFormer(num_classes=1)
     net = net.to(device=device)
     optimizer = optim.AdamW(net.parameters(), lr=ph.learning_rate,
                             weight_decay=ph.weight_decay)  # optimizer
@@ -156,18 +164,30 @@ def train_net(dataset_name):
     to_pilimg = T.ToPILImage()  # convert to PIL image to log in wandb
 
     # model saved path
-    checkpoint_path = f'./{ph.project_name}_checkpoint/'
-    best_f1score_model_path = f'./{ph.project_name}_best_f1score_model/'
-    best_loss_model_path = f'./{ph.project_name}_best_loss_model/'
+    checkpoint_path = f'logs/{ph.project_name}_checkpoint/'
+    best_f1score_model_path = f'logs/{ph.project_name}_best_f1score_model/'
+    best_loss_model_path = f'logs/{ph.project_name}_best_loss_model/'
 
     non_improved_epoch = 0  # adjust learning rate when non_improved_epoch equal to patience
 
     # 5. Begin training
 
     for epoch in range(ph.epochs):
+        if epoch == 0:
+            print('First Validation!')
+            with torch.no_grad():
+                train_val_test(
+                    mode='val', dataset_name=dataset_name,
+                    dataloader=val_loader, device=device, log_wandb=log_wandb, net=net,
+                    optimizer=optimizer, total_step=total_step, lr=lr, criterion=criterion,
+                    metric_collection=metric_collection, to_pilimg=to_pilimg, epoch=epoch,
+                    best_metrics=best_metrics, checkpoint_path=checkpoint_path,
+                    best_f1score_model_path=best_f1score_model_path, best_loss_model_path=best_loss_model_path,
+                    non_improved_epoch=non_improved_epoch
+                )
+
 
         print('Start Train!')
-
         log_wandb, net, optimizer, grad_scaler, total_step, lr = \
             train_val_test(
                 mode='train', dataset_name=dataset_name,
