@@ -3,8 +3,8 @@ class Path_Hyperparameter:
 
     # training hyper-parameter
     epochs: int = 100  # Number of epochs
-    batch_size: int = 1  # Batch size
-    inference_ratio = 2  # batch_size in val and test equal to batch_size*inference_ratio
+    batch_size: int = 16  # Batch size
+    inference_ratio = 1  # batch_size in val and test equal to batch_size*inference_ratio
     learning_rate: float = 1e-3  # Learning rate
     factor = 0.1  # learning rate decreasing factor
     patience = 12  # schedular patience
@@ -16,7 +16,7 @@ class Path_Hyperparameter:
 
     # evaluate and test hyper-parameter
     evaluate_epoch: int = 10  # start evaluate after training for evaluate epochs
-    evaluate_inteval: int = 5  # evaluate every evaluate_inteval epoch 
+    evaluate_inteval: int = 5  # evaluate every evaluate_inteval epoch
     test_epoch: int = 30  # start test after training for test epochs
     stage_epoch = [0, 0, 0, 0, 0]  # adjust learning rate after every stage epoch
     save_checkpoint: bool = True  # if save checkpoint of model or not

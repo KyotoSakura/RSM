@@ -118,9 +118,9 @@ def train_val_test(
         labels = labels.float().to(device)
 
         # 按照特定的ratio对图像进行下采样
-        b,c,h,w = image.shape
-        image = F.interpolate(image, size=(h//ph.downsample_raito, w//ph.downsample_raito), mode='bilinear', align_corners=False)
-        labels = F.interpolate(labels.unsqueeze(1), size=(h//ph.downsample_raito, w//ph.downsample_raito), mode='bilinear', align_corners=False).squeeze(1)
+        # b,c,h,w = image.shape
+        # image = F.interpolate(image, size=(h//ph.downsample_raito, w//ph.downsample_raito), mode='bilinear', align_corners=False)
+        # labels = F.interpolate(labels.unsqueeze(1), size=(h//ph.downsample_raito, w//ph.downsample_raito), mode='bilinear', align_corners=False).squeeze(1)
 
 
         # # 对图片按照设定的图像大小进行拆分
@@ -141,6 +141,7 @@ def train_val_test(
         # labels_patches = labels.unfold(1, crop_size, crop_size).unfold(2, crop_size, crop_size)
         # labels = labels_patches.reshape(-1, crop_size, crop_size).contiguous()
 
+
         if mode == 'train':
             # using amp
             with torch.cuda.amp.autocast():
@@ -159,7 +160,17 @@ def train_val_test(
             # optimizer.zero_grad()  
             # cd_loss.backward()
             # optimizer.step()
+
         else:
+            crop_size = ph.image_size
+            image_patches = image.unfold(2, crop_size, crop_size).unfold(3, crop_size, crop_size)
+            B, C, new_H, new_W, _, _ = image_patches.size()
+            image = image_patches.permute(0, 2, 3, 1, 4, 5).reshape(-1, C, crop_size, crop_size).contiguous()
+
+            # labels的形状为B,H,W, unfold之后形状为[B, ratio, ratio, H/ratio, W/ratio]
+            labels_patches = labels.unfold(1, crop_size, crop_size).unfold(2, crop_size, crop_size)
+            labels = labels_patches.reshape(-1, crop_size, crop_size).contiguous()
+
             preds = net(image)
             loss_change, diceloss, foclaloss = criterion(preds, labels)
             cd_loss = loss_change.mean()
@@ -200,10 +211,13 @@ def train_val_test(
     epoch_metrics = metric_collection.compute()  # compute epoch metric
     epoch_loss /= n_iter
 
-    print(f"{mode} f1score: {epoch_metrics['f1score']}")
-    print(f"{mode} IoU: {epoch_metrics['IoU']}")
-    print(f"{mode} IoU2: {epoch_metrics['IoU2']}")
-    print(f'{mode} epoch loss: {epoch_loss}')
+    if mode == 'train':
+        print(f'{mode} epoch loss: {epoch_loss}')
+    elif mode == 'val':
+        print(f"{mode} f1score: {epoch_metrics['f1score']}")
+        print(f"{mode} IoU: {epoch_metrics['IoU']}")
+        print(f"{mode} IoU2: {epoch_metrics['IoU2']}")
+
 
     for k in epoch_metrics.keys():
         log_wandb.log({f'epoch_{mode}_{str(k)}': epoch_metrics[k],
