@@ -24,8 +24,10 @@ def get_random_pos(img, window_shape):
     y2 = y1 + h
     return x1, x2, y1, y2
 
+
 class TrainValidateTestDataset(Dataset):
     def __init__(self, images_dir: str, labels_dir: str, mode: str):
+
         self.images_dir = Path(images_dir)
         self.labels_dir = Path(labels_dir)
         self.operation = mode
@@ -53,6 +55,7 @@ class TrainValidateTestDataset(Dataset):
         else:
             return len(self.ids)
 
+
     @classmethod
     def label_preprocess(cls, label):
         label[label <= 0.5] = 0
@@ -76,6 +79,7 @@ class TrainValidateTestDataset(Dataset):
         label = self.label_preprocess(label)
         label = torch.from_numpy(label)
 
+
         if self.operation == "train":
             x1, x2, y1, y2 = get_random_pos(img, ph.window_size)
             img_cut = img[:, x1:x2, y1:y2]
@@ -83,3 +87,4 @@ class TrainValidateTestDataset(Dataset):
             return img_cut, label_cut
         else:
             return img, label
+

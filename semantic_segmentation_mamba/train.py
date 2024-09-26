@@ -71,12 +71,15 @@ def train_net(dataset_name):
     # val_dataset = BasicDataset(images_dir=f'{ph.root_dir}/{dataset_name}/val/image/',
     #                            labels_dir=f'{ph.root_dir}/{dataset_name}/val/label/',
     #                            train=False)
+
     train_dataset = TrainValidateTestDataset(images_dir=f'{ph.root_dir}/{dataset_name}/train/image/',
                                  labels_dir=f'{ph.root_dir}/{dataset_name}/train/label/',
                                  mode="train")
     val_dataset = TrainValidateTestDataset(images_dir=f'{ph.root_dir}/{dataset_name}/val/image/',
                                labels_dir=f'{ph.root_dir}/{dataset_name}/val/label/',
                                mode="val")
+
+
 
 
 
@@ -123,9 +126,10 @@ def train_net(dataset_name):
 
     # 5. Set up model, optimizer, warm_up_scheduler, learning rate scheduler, loss function and other things
 
-    # net = RSM_SS(dims=ph.dims, depths=ph.depths, ssm_d_state=ph.ssm_d_state, ssm_dt_rank=ph.ssm_dt_rank, \
-    #            ssm_ratio=ph.ssm_ratio, mlp_ratio=ph.mlp_ratio, downsample_version=ph.downsample_version, patchembed_version=ph.patchembed_version)  # change detection model
-    net = UNetFormer(num_classes=1)
+    net = RSM_SS(dims=ph.dims, depths=ph.depths, ssm_d_state=ph.ssm_d_state, ssm_dt_rank=ph.ssm_dt_rank, \
+                ssm_ratio=ph.ssm_ratio, mlp_ratio=ph.mlp_ratio, downsample_version=ph.downsample_version, patchembed_version=ph.patchembed_version)  # change detection model
+    # net = UNetFormer(num_classes=1)
+
     net = net.to(device=device)
     optimizer = optim.AdamW(net.parameters(), lr=ph.learning_rate,
                             weight_decay=ph.weight_decay)  # optimizer
@@ -163,9 +167,11 @@ def train_net(dataset_name):
     to_pilimg = T.ToPILImage()  # convert to PIL image to log in wandb
 
     # model saved path
+
     checkpoint_path = f'./logs_{ph.dataset_name}/{ph.project_name}_checkpoint/'
     best_f1score_model_path = f'./logs_{ph.dataset_name}/{ph.project_name}_best_f1score_model/'
     best_loss_model_path = f'./logs_{ph.dataset_name}/{ph.project_name}_best_loss_model/'
+
 
     non_improved_epoch = 0  # adjust learning rate when non_improved_epoch equal to patience
 

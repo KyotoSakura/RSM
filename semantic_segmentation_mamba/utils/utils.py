@@ -217,7 +217,6 @@ def train_val_test(
         print(f"{mode} f1score: {epoch_metrics['f1score']}")
         print(f"{mode} IoU: {epoch_metrics['IoU']}")
 
-
     for k in epoch_metrics.keys():
         log_wandb.log({f'epoch_{mode}_{str(k)}': epoch_metrics[k],
                        'epoch': epoch})  # log epoch metric

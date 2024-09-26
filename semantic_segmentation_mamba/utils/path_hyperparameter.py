@@ -2,6 +2,7 @@ class Path_Hyperparameter:
     random_seed = 42
 
     # training hyper-parameter
+
     epochs: int = 150  # Number of epochs
     batch_size: int = 4  # Batch size
     inference_ratio = 1  # batch_size in val and test equal to batch_size*inference_ratio
