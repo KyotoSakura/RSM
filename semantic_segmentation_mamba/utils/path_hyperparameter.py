@@ -2,8 +2,9 @@ class Path_Hyperparameter:
     random_seed = 42
 
     # training hyper-parameter
-    epochs: int = 100  # Number of epochs
-    batch_size: int = 16  # Batch size
+
+    epochs: int = 150  # Number of epochs
+    batch_size: int = 4  # Batch size
     inference_ratio = 1  # batch_size in val and test equal to batch_size*inference_ratio
     learning_rate: float = 1e-3  # Learning rate
     factor = 0.1  # learning rate decreasing factor
@@ -40,6 +41,7 @@ class Path_Hyperparameter:
     image_size = 256
     window_size = (image_size, image_size)
     downsample_raito = 1
+    model_name = 'UNetFormer'
     dataset_name = 'MassachusettsRoadsDataset'
     root_dir = '/media/lscsc/nas/huyin'  # the root dir of your dataset
 
@@ -49,7 +51,7 @@ class Path_Hyperparameter:
 
     # log wandb hyper-parameter
     # log_wandb_project: str = 'train_whu_cd'  # wandb project name
-    log_wandb_project: str = 'train_massroads'  # wandb project name
+    log_wandb_project: str = f'{dataset_name}_Train'  # wandb project name
 
 
     project_name = f'{log_wandb_project}_{image_size}_{learning_rate}'
